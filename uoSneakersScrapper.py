@@ -1,66 +1,102 @@
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
 import re
 import requests
 import csv
+import time
+from links_page1 import *
 
-# url = "https://www.urbanoutfitters.com/shop/converse-chuck-taylor-all-star-canvas-platform-high-top-sneaker?category=SEARCHRESULTS&color=015&searchparams=q%3Dsneaker&type=REGULAR&quantity=1"
-
+url_list = url_list_page1
 # Csv writing setup
-filename = "sneakers.csv"
-csv_file = open(filename, "w", encoding='utf-8')
+csv_file = open("sneakers_page1_11_20.csv", "w", encoding='utf-8')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['name', 'price', 'rating', 'num_reviews', 'color', 'description', 'material', 'fit', 'reviews'])
 
-# soup = BeautifulSoup(r.content, "html.parser")
-# soup = BeautifulSoup(r.content, "html5lib")
+for url in url_list:
+    br = webdriver.Firefox()
+    br.get(url)
+    time.sleep(2)
 
-with open('downloaded.html', 'r') as r:
-	soup = BeautifulSoup(r.read(), "lxml")
+    br.execute_script("window.scroll(0, 1500);")
+    time.sleep(5)
 
-	try:
-		name = soup.find('h1', class_="c-pwa-product-meta-heading").text.strip()
-	except:
-		name = "N/A"
+    html = br.page_source
+    soup = BeautifulSoup(html, "lxml")
 
-	try:
-		price = soup.find('span', class_="c-pwa-product-price__current").text.strip()
-	except:
-		price = "N/A"
+    try:
+        name = soup.find('h1', class_="c-pwa-product-meta-heading").text.strip()
+    except:
+        name = "N/A"
 
-	try:
-		rating = soup.find('div', class_="c-pwa-reviews-snippet__rating-count").text.strip()
-	except:
-		rating = "N/A"
+    try:
+        price = soup.find('span', class_="c-pwa-product-price__current").text.strip()
+    except:
+        price = "N/A"
 
-	try:
-		num_reviews = soup.find('a', class_="c-pwa-reviews-snippet__reviews-link").text.strip()[0:-8]
-	except:
-		num_reviews = 0
+    try:
+        rating = soup.find('div', class_="c-pwa-reviews-snippet__rating-count").text.strip()
+    except:
+        rating = "N/A"
 
-	try:
-		color = soup.find('span', class_="c-pwa-sku-selection__color-value").text.strip()
-	except:
-		color = "N/A"
+    try:
+        num_reviews = soup.find('a', class_="c-pwa-reviews-snippet__reviews-link").text.strip()[0:-8]
+    except:
+        num_reviews = 0
 
-	try:
-		details = soup.find('div', class_="s-pwa-cms c-pwa-markdown")
-		items = details.findAll('p')
-		description = items[0].text
-		material = items[1].text[14:]
-		material = material[:1] + material[1:].replace('-', ' -')
-		fit = items[2].text[10:]
-	except:
-		description = "N/A"
-		material = "N/A"
-		fit = "N/A"
+    try:
+        color = soup.find('span', class_="c-pwa-sku-selection__color-value").text.strip()
+    except:
+        color = "N/A"
 
-	try:
-		reviews_lst = soup.findAll('p', class_="c-pwa-review-detail__text")
-		stripped_reviews_lst = [r.text.strip() for r in reviews_lst]
-		reviews = '; '.join(stripped_reviews_lst)
-	except:
-		reviews = "N/A"
-	
-	csv_writer.writerow([name, price, rating, num_reviews, color, description, material, fit, reviews])
+    try:
+        details = soup.find('div', class_="s-pwa-cms c-pwa-markdown")
+        items = details.findAll('p')
+        description = items[0].text
+        material = items[1].text[14:]
+        material = material[:1] + material[1:].replace('-', ' -')
+        fit = items[2].text[10:]
+    except:
+        description = "N/A"
+        material = "N/A"
+        fit = "N/A"
+
+    try:
+        num_pages = soup.find('span', class_="o-pwa-pagination__page-total").text
+        int_num = int(num_pages)
+    except:
+        int_num = 0
+    
+    print(int_num)
+    all_reviews = ""
+    try:
+        if int_num > 0:
+            num_pages = soup.find('span', class_="o-pwa-pagination__page-total").text
+            reviews_lst = soup.findAll('p', class_="c-pwa-review-detail__text")
+            stripped_reviews_lst = [r.text.strip() for r in reviews_lst]
+            reviews = '; '.join(stripped_reviews_lst)
+            all_reviews += reviews
+
+            for i in range(2, min(int_num+1, 6)):
+                url_new = url + "&reviewPage=" + str(i)
+                br_new = webdriver.Firefox()
+                br_new.get(url_new)
+                time.sleep(2)
+
+                br_new.execute_script("window.scroll(0, 1500);")
+                time.sleep(5)
+
+                html_new = br_new.page_source
+                soup_new = BeautifulSoup(html_new, "lxml")
+
+                reviews_lst = soup_new.findAll('p', class_="c-pwa-review-detail__text")
+                stripped_reviews_lst = [r.text.strip() for r in reviews_lst]
+                new_reviews = '; '.join(stripped_reviews_lst)
+                all_reviews += new_reviews				
+    except:
+        all_reviews += ""
+    
+    csv_writer.writerow([name, price, rating, num_reviews, color, description, material, fit, all_reviews])
 
 csv_file.close()
