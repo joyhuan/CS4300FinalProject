@@ -6,16 +6,17 @@ import re
 import requests
 import csv
 import time
-from links_page1 import *
+from link import *
 
-url_list = url_list_page1
+url_list = url_list_page3
 # Csv writing setup
-csv_file = open("sneakers_page1_11_20.csv", "w", encoding='utf-8')
-csv_writer = csv.writer(csv_file)
-csv_writer.writerow(['name', 'price', 'rating', 'num_reviews', 'color', 'description', 'material', 'fit', 'reviews'])
 
-for url in url_list:
-    br = webdriver.Firefox()
+csv_file = open("sneakers_page1_0_10.csv", "w", encoding='utf-8')
+csv_writer = csv.writer(csv_file)
+csv_writer.writerow(['name', 'price', 'rating', 'num_reviews', 'color', 'description', 'material', 'fit', 'reviews', 'brand'])
+
+for url in url_list[0:10]:
+    br = webdriver.Firefox(executable_path="/Users/mac/Downloads/geckodriver")
     br.get(url)
     time.sleep(2)
 
@@ -24,6 +25,12 @@ for url in url_list:
 
     html = br.page_source
     soup = BeautifulSoup(html, "lxml")
+
+    try:
+        brand = soup.find('a', class_="c-pwa-product-partner-url__link c-pwa-link c-pwa-link--client").text.strip()
+        brand = brand[8:]
+    except:
+        brand = "N/A"
 
     try:
         name = soup.find('h1', class_="c-pwa-product-meta-heading").text.strip()
@@ -97,6 +104,6 @@ for url in url_list:
     except:
         all_reviews += ""
     
-    csv_writer.writerow([name, price, rating, num_reviews, color, description, material, fit, all_reviews])
+    csv_writer.writerow([name, price, rating, num_reviews, color, description, material, fit, all_reviews, brand])
 
 csv_file.close()
