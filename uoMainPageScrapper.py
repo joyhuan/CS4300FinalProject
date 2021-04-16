@@ -10,7 +10,7 @@ csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['name', 'price', 'link', 'image'])
 
 base_url = "https://www.urbanoutfitters.com"
-with open('sneakers_page1_images.html', 'r') as r:
+with open('sneaker.html', 'r') as r:
     soup = BeautifulSoup(r.read(), "lxml")
 
     products = soup.findAll('div', class_="c-pwa-product-tile")
@@ -27,7 +27,7 @@ with open('sneakers_page1_images.html', 'r') as r:
             price = "N/A"
 
         try:
-            link = base_url + product.find('a', class_="c-pwa-product-tile__link c-pwa-link c-pwa-link--client")["href"]
+            link = product.find('a', class_="c-pwa-product-tile__link c-pwa-link c-pwa-link--client")["href"]
         except:
             link = "N/A"
 

@@ -11,16 +11,16 @@ from link import *
 url_list = url_list_page3
 # Csv writing setup
 
-csv_file = open("sneakers_page1_0_10.csv", "w", encoding='utf-8')
+csv_file = open("sneakers_description.csv", "w", encoding='utf-8')
 csv_writer = csv.writer(csv_file)
 csv_writer.writerow(['name', 'price', 'rating', 'num_reviews', 'color', 'description', 'material', 'fit', 'reviews', 'brand'])
 
-for url in url_list[0:10]:
-    br = webdriver.Firefox(executable_path="/Users/mac/Downloads/geckodriver")
+br = webdriver.Firefox(executable_path="/Users/mac/Downloads/geckodriver")
+for url in url_list:
     br.get(url)
     time.sleep(2)
 
-    br.execute_script("window.scroll(0, 1500);")
+    br.execute_script("window.scroll(0, 1400);")
     time.sleep(5)
 
     html = br.page_source
@@ -58,16 +58,34 @@ for url in url_list[0:10]:
         color = "N/A"
 
     try:
-        details = soup.find('div', class_="s-pwa-cms c-pwa-markdown")
+        details = soup.find_all('div', class_="s-pwa-cms c-pwa-markdown")[0]
         items = details.findAll('p')
         description = items[0].text
+    except:
+        try:
+            details = soup.find_all('div', class_="s-pwa-cms c-pwa-markdown")[1]
+            items = details.findAll('p')
+            description = items[0].text
+        except:
+            description = "N/A"
+    
+
+
+    try:
+        details = soup.find('div', class_="s-pwa-cms c-pwa-markdown")
+        items = details.findAll('p')
         material = items[1].text[14:]
         material = material[:1] + material[1:].replace('-', ' -')
+    except:
+        material = "N/A"
+    
+    try:
+        details = soup.find('div', class_="s-pwa-cms c-pwa-markdown")
+        items = details.findAll('p')
         fit = items[2].text[10:]
     except:
-        description = "N/A"
-        material = "N/A"
         fit = "N/A"
+
 
     try:
         num_pages = soup.find('span', class_="o-pwa-pagination__page-total").text
@@ -77,32 +95,32 @@ for url in url_list[0:10]:
     
     print(int_num)
     all_reviews = ""
-    try:
-        if int_num > 0:
-            num_pages = soup.find('span', class_="o-pwa-pagination__page-total").text
-            reviews_lst = soup.findAll('p', class_="c-pwa-review-detail__text")
-            stripped_reviews_lst = [r.text.strip() for r in reviews_lst]
-            reviews = '; '.join(stripped_reviews_lst)
-            all_reviews += reviews
+    # try:
+    #     if int_num > 0:
+    #         num_pages = soup.find('span', class_="o-pwa-pagination__page-total").text
+    #         reviews_lst = soup.findAll('p', class_="c-pwa-review-detail__text")
+    #         stripped_reviews_lst = [r.text.strip() for r in reviews_lst]
+    #         reviews = '; '.join(stripped_reviews_lst)
+    #         all_reviews += reviews
 
-            for i in range(2, min(int_num+1, 6)):
-                url_new = url + "&reviewPage=" + str(i)
-                br_new = webdriver.Firefox()
-                br_new.get(url_new)
-                time.sleep(2)
+    #         for i in range(2, min(int_num+1, 6)):
+    #             url_new = url + "&reviewPage=" + str(i)
+    #             br_new = webdriver.Firefox()
+    #             br_new.get(url_new)
+    #             time.sleep(2)
 
-                br_new.execute_script("window.scroll(0, 1500);")
-                time.sleep(5)
+    #             br_new.execute_script("window.scroll(0, 1500);")
+    #             time.sleep(5)
 
-                html_new = br_new.page_source
-                soup_new = BeautifulSoup(html_new, "lxml")
+    #             html_new = br_new.page_source
+    #             soup_new = BeautifulSoup(html_new, "lxml")
 
-                reviews_lst = soup_new.findAll('p', class_="c-pwa-review-detail__text")
-                stripped_reviews_lst = [r.text.strip() for r in reviews_lst]
-                new_reviews = '; '.join(stripped_reviews_lst)
-                all_reviews += new_reviews				
-    except:
-        all_reviews += ""
+    #             reviews_lst = soup_new.findAll('p', class_="c-pwa-review-detail__text")
+    #             stripped_reviews_lst = [r.text.strip() for r in reviews_lst]
+    #             new_reviews = '; '.join(stripped_reviews_lst)
+    #             all_reviews += new_reviews				
+    # except:
+    all_reviews += ""
     
     csv_writer.writerow([name, price, rating, num_reviews, color, description, material, fit, all_reviews, brand])
 
